@@ -1,0 +1,107 @@
+﻿@page "/ViewContractorVehicles/{Id:guid}"
+@using VehicleRegisterApp.Data.Models
+@using VehicleRegisterApp.Services.VehicleServices;
+@inject IVehicleService VehicleService
+@if (vehicles == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Registration</th>
+                <th>Type</th>
+                <th>Model</th>
+                <th>Weight</th>
+                <th>
+                    <a class="btn btn-sm btn-success" href="/UspertVehicle/@Id">
+                        + Add Vehicle
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var vehicle in vehicles.Skip((currentPage - 1) * pageSize).Take(pageSize))
+            {
+                <tr>
+                    <td>@vehicle.RegNumber</td>
+                    <td>@vehicle.Type</td>
+                    <td>@vehicle.Model</td>
+                    <td>@vehicle.Weight</td>
+                    <td>
+                        <a class="btn btn-sm btn-outline-warning me-2" title="Edit" href="/UspertVehicle/@Id/@vehicle.Id">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        <button class="btn btn-sm btn-outline-danger" title="Delete" @onclick="() => DeleteVehicle(vehicle.Id)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(currentPage == 1 ? "disabled" : "")">
+                <button class="page-link" @onclick="PreviousPage">Previous</button>
+            </li>
+            @for (var i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == currentPage ? "active" : "")">
+                    <button class="page-link" @onclick="() => GoToPage(i)">@i</button>
+                </li>
+            }
+            <li class="page-item @(currentPage == totalPages ? "disabled" : "")">
+                <button class="page-link" @onclick="NextPage">Next</button>
+            </li>
+        </ul>
+    </nav>
+}
+
+@code {
+    private List<Vehicle> vehicles;
+    private int currentPage = 1;
+    private int pageSize = 5;
+    private int totalPages = 1;
+    [Parameter]
+    public Guid Id { get; set; }
+    protected override async Task OnInitializedAsync()
+    {
+        vehicles = await VehicleService.GetAllByContractorIdAsync(Id);
+        totalPages = (int)Math.Ceiling(vehicles.Count / (double)pageSize);
+    }
+    private void NextPage()
+    {
+        if (currentPage < totalPages)
+        {
+            currentPage++;
+        }
+    }
+
+    private void PreviousPage()
+    {
+        if (currentPage > 1)
+        {
+            currentPage--;
+        }
+    }
+
+    private void GoToPage(int pageNumber)
+    {
+        currentPage = pageNumber;
+    }
+
+    private async Task DeleteVehicle(Guid vehicleId)
+    {
+        var success = await VehicleService.DeleteAsync(vehicleId);
+        if (success)
+        {
+            vehicles = await VehicleService.GetAllByContractorIdAsync(Id);
+            totalPages = (int)Math.Ceiling(vehicles.Count / (double)pageSize);
+            StateHasChanged();
+        }
+    }
+}

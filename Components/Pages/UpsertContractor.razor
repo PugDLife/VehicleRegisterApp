@@ -1,0 +1,61 @@
+﻿@page "/UspertContractor"
+@page "/UspertContractor/{Id:guid}"
+@using VehicleRegisterApp.Data.Models
+@using VehicleRegisterApp.Services
+@using VehicleRegisterApp.Services.ContractorServices
+@inject IContractorService ContractorService
+@inject NavigationManager Nav
+
+
+<div class="row g-2">
+    <div class="col-md-2">
+        <label class="form-label">Name</label>
+        <input class="form-control" @bind="model.Name" />
+    </div>
+    <div class="col-md-5">
+        <label class="form-label">Email</label>
+        <input class="form-control" @bind="model.Email" />
+    </div>
+    <div class="col-md-5">
+        <label class="form-label">Phone Number</label>
+        <input class="form-control" @bind="model.PhoneNumber" />
+    </div>
+</div>
+<div class="mt-3">
+    <button class="btn btn-primary me-2" @onclick="SaveContractor">Save Contractor</button>
+    <NavLink class="btn btn-secondary" href="/">Cancel</NavLink>
+</div>
+@code {
+    private Contractor model = new();
+    [Parameter]
+    public Guid? Id { get; set; }
+
+    private string Title => Id.HasValue ? "Edit Contractor" : "Add Contractor";
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id.HasValue)
+        {
+            bool isEdit = Id == null || Id == Guid.Empty ? true : false;
+            var contractor = new Contractor();
+            if (Id != null)
+                contractor = await ContractorService.GetByIdAsync(Id.Value);
+            if (contractor != null)
+            {
+                model = contractor;
+            }
+        }
+    }
+    private async Task SaveContractor()
+    {
+        if (Id != null)
+        {
+            await ContractorService.UpdateAsync(Id, model);
+        }
+        else
+        {
+            await ContractorService.CreateAsync(model);
+        }
+        Nav.NavigateTo("/");
+    }
+}

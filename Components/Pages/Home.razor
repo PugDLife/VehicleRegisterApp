@@ -1,0 +1,84 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using VehicleRegisterApp.Data.Models
+@using VehicleRegisterApp.Services
+@using VehicleRegisterApp.Services.ContractorServices
+@inject IContractorService ContractorService
+
+<PageTitle>Home</PageTitle>
+@if(contractors == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Phone Number</th>
+                <th>
+                    <a class="btn btn-sm btn-success" href="/UspertContractor">
+                        + Add Contractor
+                    </a>
+                    <a class="btn btn-sm btn-success" href="/contractor-summary">
+                        - View Contractor Summary
+                    </a>
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var contractor in contractors.Skip((currentPage - 1) * pageSize).Take(pageSize))
+            {
+                <tr>
+                <td>@contractor.Name</td>
+                <td>@contractor.Email</td>
+                    <td>@contractor.PhoneNumber</td>
+                    <td>
+                        <a href="/UspertVehicle/@contractor.Id" class="btn btn-sm btn-outline-primary me-2" title="Add Vehicle">
+                            <i class="bi bi-plus-circle"></i>
+                        </a>
+
+                        <a href="/ViewContractorVehicles/@contractor.Id" class="btn btn-sm btn-outline-secondary me-2" title="View">
+                            <i class="bi bi-eye"></i>
+                        </a>
+
+                        <a class="btn btn-sm btn-outline-warning me-2" title="Edit" href="/UspertContractor/@contractor.Id">
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+
+                        <button class="btn btn-sm btn-outline-danger" title="Delete" @onclick="() => DeleteContractor(contractor.Id)">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+
+@code {
+    private List<Contractor> contractors;
+    private int currentPage = 1;
+    private int pageSize = 5;
+    private int totalPages = 1;
+
+    protected override async Task OnInitializedAsync()
+    {
+        contractors = await ContractorService.GetAllAsync();
+        totalPages = (int)Math.Ceiling(contractors.Count / (double)pageSize);
+    }
+
+    private async Task DeleteContractor(Guid contractorId)
+    {
+        var success = await ContractorService.DeleteAsync(contractorId);
+        if (success)
+        {
+            contractors = await ContractorService.GetAllAsync();
+            totalPages = (int)Math.Ceiling(contractors.Count / (double)pageSize);
+            StateHasChanged();
+        }
+    }
+}

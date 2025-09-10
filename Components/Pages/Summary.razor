@@ -1,0 +1,68 @@
+﻿@page "/contractor-summary"
+@using VehicleRegisterApp.Services.VehicleServices
+@inject VehicleRegisterApp.Data.DataBaseContext DbContext
+@using VehicleRegisterApp.Services.ContractorServices
+@inject IContractorService ContractorService
+@inject IVehicleService VehicleService
+
+<h3 class="mb-3">Contractor Vehicle Summary</h3>
+
+@if (summaries == null)
+{
+    <p><em>Loading...</em></p>
+}
+else if (!summaries.Any())
+{
+    <p>No contractors or vehicles found.</p>
+}
+else
+{
+    <table class="table table-striped table-hover">
+        <thead class="table-dark">
+            <tr>
+                <th>Contractor Name</th>
+                <th>Number of Vehicles</th>
+                <th>Total Vehicle Weight</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var summary in summaries)
+            {
+                <tr>
+                    <td>@summary.ContractorName</td>
+                    <td>@summary.VehicleCount</td>
+                    <td>@summary.TotalVehicleWeight kg</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<ContractorSummaryModel> summaries;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var contractors = await ContractorService.GetAllAsync();
+        var vehicles = await VehicleService.GetAllAsync();
+
+
+        summaries = contractors.Select(c =>
+        {
+            var contractorVehicles = vehicles.Where(v => v.ContractorId == c.Id).ToList();
+            return new ContractorSummaryModel
+            {
+                ContractorName = c.Name,
+                VehicleCount = contractorVehicles.Count,
+                TotalVehicleWeight = contractorVehicles.Sum(v => v.Weight)
+            };
+        }).ToList();
+    }
+
+    private class ContractorSummaryModel
+    {
+        public string ContractorName { get; set; }
+        public int VehicleCount { get; set; }
+        public double TotalVehicleWeight { get; set; }
+    }
+}

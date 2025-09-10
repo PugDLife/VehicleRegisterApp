@@ -1,0 +1,8 @@
+CREATE VIEW ContractorVehicleSummary AS
+SELECT 
+    c.Name AS ContractorName,
+    COUNT(v.Id) AS VehicleCount,
+    ISNULL(SUM(v.Weight), 0) AS TotalVehicleWeight
+FROM Contractors c
+LEFT JOIN Vehicles v ON c.Id = v.ContractorId
+GROUP BY c.Id, c.Name;
